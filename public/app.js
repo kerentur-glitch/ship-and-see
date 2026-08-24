@@ -6,6 +6,7 @@ const retryBtn = document.getElementById("retryBtn");
 const editBtn = document.getElementById("editBtn");
 const publishAnotherBtn = document.getElementById("publishAnotherBtn");
 const keptImageHint = document.getElementById("keptImageHint");
+const keptImagePreview = document.getElementById("keptImagePreview");
 
 let currentId = null;
 let pollTimer = null;
@@ -101,7 +102,12 @@ editBtn.addEventListener("click", () => {
   document.getElementById("title").value = lastDraft.title;
   document.getElementById("blurb").value = lastDraft.blurb;
   document.getElementById("image").value = "";
-  keptImageHint.classList.toggle("hidden", !lastDraft.imageDataUrl);
+  if (lastDraft.imageDataUrl) {
+    keptImagePreview.src = lastDraft.imageDataUrl;
+    keptImageHint.classList.remove("hidden");
+  } else {
+    keptImageHint.classList.add("hidden");
+  }
   showOnly(form);
 });
 

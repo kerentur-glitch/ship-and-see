@@ -24,7 +24,10 @@
       <label>
         <span>תמונה (לא חובה)</span>
         <input type="file" id="image" accept="image/*">
-        <p id="keptImageHint" class="hint hidden">התמונה שכבר העלית תישמר אם לא תבחרי אחרת.</p>
+        <div id="keptImageHint" class="kept-image hidden">
+          <img id="keptImagePreview" alt="">
+          <span>התמונה הזו תישמר אם לא תבחרי קובץ חדש</span>
+        </div>
       </label>
       <button type="submit" id="submitBtn">פרסמי</button>
     </form>

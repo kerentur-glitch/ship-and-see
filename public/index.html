@@ -24,6 +24,7 @@
       <label>
         <span>תמונה (לא חובה)</span>
         <input type="file" id="image" accept="image/*">
+        <p id="keptImageHint" class="hint hidden">התמונה שכבר העלית תישמר אם לא תבחרי אחרת.</p>
       </label>
       <button type="submit" id="submitBtn">פרסמי</button>
     </form>
@@ -48,7 +49,10 @@
     <section id="errorCard" class="card error hidden">
       <p class="error-title">משהו השתבש בזמן שהעלינו את הדף שלך לאוויר</p>
       <p class="error-body">שום דבר לא אבד — כל מה שכתבת עדיין שמור.</p>
-      <button id="retryBtn" class="btn primary">נסי שוב</button>
+      <div class="actions">
+        <button id="retryBtn" class="btn primary">נסי שוב</button>
+        <button id="editBtn" class="btn">לערוך את הפרטים</button>
+      </div>
     </section>
   </main>
 

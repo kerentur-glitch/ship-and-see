@@ -3,10 +3,13 @@ const progressCard = document.getElementById("progressCard");
 const successCard = document.getElementById("successCard");
 const errorCard = document.getElementById("errorCard");
 const retryBtn = document.getElementById("retryBtn");
+const editBtn = document.getElementById("editBtn");
 const publishAnotherBtn = document.getElementById("publishAnotherBtn");
+const keptImageHint = document.getElementById("keptImageHint");
 
 let currentId = null;
 let pollTimer = null;
+let lastDraft = { title: "", blurb: "", imageDataUrl: null };
 
 function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -67,7 +70,12 @@ form.addEventListener("submit", async (e) => {
   const title = document.getElementById("title").value;
   const blurb = document.getElementById("blurb").value;
   const imageFile = document.getElementById("image").files[0];
-  const imageDataUrl = await fileToDataUrl(imageFile);
+  // No new file chosen? Fall back to whatever image was already attached
+  // (matters for the "edit and republish" path, where the file input can't
+  // be pre-filled for security reasons).
+  const imageDataUrl = (await fileToDataUrl(imageFile)) || lastDraft.imageDataUrl;
+
+  lastDraft = { title, blurb, imageDataUrl };
 
   showOnly(progressCard);
   setStep("building");
@@ -89,7 +97,17 @@ retryBtn.addEventListener("click", async () => {
   pollStatus(currentId);
 });
 
+editBtn.addEventListener("click", () => {
+  document.getElementById("title").value = lastDraft.title;
+  document.getElementById("blurb").value = lastDraft.blurb;
+  document.getElementById("image").value = "";
+  keptImageHint.classList.toggle("hidden", !lastDraft.imageDataUrl);
+  showOnly(form);
+});
+
 publishAnotherBtn.addEventListener("click", () => {
   form.reset();
+  lastDraft = { title: "", blurb: "", imageDataUrl: null };
+  keptImageHint.classList.add("hidden");
   showOnly(form);
 });

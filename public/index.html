@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>Launchpad</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="wrap">
+    <p class="eyebrow">Launchpad</p>
+    <h1>פרסמי משהו קטן</h1>
+    <p class="sub">כותרת, טקסט קצר, ותמונה — ותקבלי קישור חי שאפשר לשתף.</p>
+
+    <form id="publishForm" class="card">
+      <label>
+        <span>כותרת</span>
+        <input type="text" id="title" placeholder="🚀 עכשיו חי: שם הפיצ'ר" required>
+      </label>
+      <label>
+        <span>תיאור קצר</span>
+        <textarea id="blurb" rows="3" placeholder="שתי-שלוש שורות שמסבירות מה זה"></textarea>
+      </label>
+      <label>
+        <span>תמונה (לא חובה)</span>
+        <input type="file" id="image" accept="image/*">
+      </label>
+      <button type="submit" id="submitBtn">פרסמי</button>
+    </form>
+
+    <section id="progressCard" class="card hidden">
+      <ol class="steps">
+        <li id="step-building"><span class="dot"></span>בונים את הדף שלך</li>
+        <li id="step-placing"><span class="dot"></span>ממקמים אותו באוויר</li>
+        <li id="step-live"><span class="dot"></span>חי!</li>
+      </ol>
+    </section>
+
+    <section id="successCard" class="card hidden">
+      <p class="success-title">🎉 זה חי עכשיו</p>
+      <a id="liveLink" class="live-link" href="#" target="_blank"></a>
+      <div class="actions">
+        <a id="openBtn" class="btn primary" href="#" target="_blank">פתחי את הדף</a>
+        <button id="publishAnotherBtn" class="btn">פרסמי עוד אחד</button>
+      </div>
+    </section>
+
+    <section id="errorCard" class="card error hidden">
+      <p class="error-title">משהו השתבש בזמן שהעלינו את הדף שלך לאוויר</p>
+      <p class="error-body">שום דבר לא אבד — כל מה שכתבת עדיין שמור.</p>
+      <button id="retryBtn" class="btn primary">נסי שוב</button>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -213,10 +213,19 @@ app.get("/p/:id", (req, res) => {
 
     sendBeacon("view");
 
-    let reacted = false;
+    // Remembered on this device across reloads, so the button doesn't lie
+    // and invite a re-like — the server also dedupes by identity regardless.
+    const REACTED_KEY = "reacted_" + PAGE_ID;
+    let reacted = !!localStorage.getItem(REACTED_KEY);
+    if (reacted) {
+      document.getElementById("likeBtn").disabled = true;
+      document.getElementById("heartBtn").disabled = true;
+    }
+
     function react(kind) {
       if (reacted) return;
       reacted = true;
+      localStorage.setItem(REACTED_KEY, kind);
       document.getElementById("likeBtn").disabled = true;
       document.getElementById("heartBtn").disabled = true;
       sendBeacon("reaction", kind);

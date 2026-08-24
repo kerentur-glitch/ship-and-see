@@ -124,9 +124,31 @@ app.post("/api/beacon", (req, res) => {
   res.status(204).end();
 });
 
+const SETTLE_MS = 15000; // no new event on a page for this long => "settled"
+
 app.get("/api/pulse", (req, res) => {
   const cleaned = processEvents([...seedEvents, ...liveEvents]);
-  res.json({ pages: summarize(cleaned), eventsIngested: cleaned.length });
+  const summary = summarize(cleaned);
+
+  const lastEventAt = {};
+  for (const e of cleaned) {
+    const t = new Date(e.ts).getTime();
+    if (!lastEventAt[e.page_id] || t > lastEventAt[e.page_id]) lastEventAt[e.page_id] = t;
+  }
+
+  const now = Date.now();
+  const pagesOut = {};
+  for (const [pageId, stats] of Object.entries(summary)) {
+    const known = pages.get(pageId);
+    pagesOut[pageId] = {
+      ...stats,
+      title: known ? known.title : null,
+      liveUrl: known ? `/p/${pageId}` : null,
+      settled: now - (lastEventAt[pageId] || 0) > SETTLE_MS,
+    };
+  }
+
+  res.json({ pages: pagesOut, eventsIngested: cleaned.length });
 });
 
 app.get("/p/:id", (req, res) => {

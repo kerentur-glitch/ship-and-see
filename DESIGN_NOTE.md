@@ -1,70 +1,80 @@
 # Design Note — Ship & See
 
-## What did I build, and what did I deliberately cut?
+## What I built, and what I cut
 
-I built both surfaces end to end and connected them: **Launchpad** takes a title, a blurb,
-and an optional image through a guided flow, moves through real `building → placing → live`
-states, and ends in a shareable URL. Every published page carries a beacon that reports
-views and reactions into **Pulse**, which turns the raw event stream into a reach number I'd
-defend, distinguishing it from raw pageloads.
+I built both surfaces and connected them into one working loop. Launchpad walks you through
+publishing a title, a blurb, and an optional image, moves through real `building → placing →
+live` states, and ends with a shareable URL. Every page it publishes carries a small beacon
+that reports views and reactions back into Pulse, which turns that raw stream into a reach
+number I'm comfortable standing behind, and keeps it clearly separate from the raw pageload
+count.
 
-Deliberate cuts:
-- **No raw-HTML upload for Launchpad**, only title/blurb/image. Safely sanitizing arbitrary
-  third-party markup to inject a beacon into it is real work with little payoff for a demo.
-- **In-memory storage on one long-running process** (Render, not serverless — serverless
-  would reset state on every request). Explicitly allowed by the brief; the real tradeoff is
-  that a redeploy or idle-timeout restart wipes any page published through Launchpad, though
-  the seeded `events.ndjson` history always reloads from disk. I hit this myself while testing
-  and decided it wasn't worth solving this week.
-- **Polling instead of WebSockets** for Pulse (every 2s) — same felt liveness, less machinery.
-- **No accounts or auth** — one shared, anonymous publish flow.
+A few things I left out on purpose. I didn't support uploading a raw HTML file for Launchpad,
+only title/blurb/image — sanitizing someone else's markup well enough to safely inject a
+beacon into it felt like real work for very little payoff here. I also kept storage in memory
+on a single long-running server rather than adding a database. The brief allows that
+explicitly, but the tradeoff is real: I hit it myself while testing, when a redeploy wiped a
+page I'd just published. Given more time, that's the first thing I'd fix. I also chose plain
+polling over WebSockets for Pulse — it feels just as live, for a lot less to build. And there's
+no login or accounts; it's one shared, anonymous publish flow, matching the scope of the ask.
 
-## Pulse: why can the number be trusted, and how would I defend it?
+## Why I'd trust the Pulse number, and how I'd defend it
 
-The model: dedupe by `event_id` (idempotent ingest), sort by real timestamp (not arrival
-order), flag known bot signatures, and count reach as **distinct (ip_trunc, ua) pairs among
-non-bot traffic** — an honest proxy, not a perfect one (two real people behind the same NAT
-on the same browser/OS collapse into one; I say so rather than hide it).
+The core idea is simple: dedupe by `event_id` so a re-delivered event can't double-count, sort
+by the actual timestamp rather than arrival order, filter out known bot signatures, and count
+a "human" as one distinct (IP, user-agent) pair among whatever's left. I want to be upfront
+that this last part is a proxy, not a perfect identity — two real people behind the same
+router on the same browser and OS would look like one person to this model. I'd rather say
+that plainly than let the number look more precise than it is.
 
-Validated against the real `events.ndjson`: 78 lines → 72 after dedupe → 62 of those
-bot-generated (one UA alone produced 47 pageloads across 43 rotating `session_id`s from a
-single IP) → **3 trustworthy humans total**, out of 67 raw pageloads. That gap is the point.
+I didn't take this on faith — I ran it against the real `events.ndjson` they gave us. Of 78
+lines, 72 survive deduping. Of those, 62 turned out to be bots: one script alone generated 47
+pageloads from a single IP, spreading itself across 43 different rotating session IDs to look
+like 43 different people. What's left is 3 real, distinct humans across both pages, out of 67
+raw pageloads. That gap between the two numbers is really the whole exercise.
 
-While testing my own live loop I found a real hole: reactions were deduped by bot UA but not
-by identity — refreshing and re-liking inflated the count. Fixed to use the same identity key
-as reach, and verified directly: two "like" beacons from the same identity with different
-`session_id`s now collapse to one, with the duplicate reported, not hidden.
+Testing my own loop also caught something I'd missed: reactions were filtered for bots but not
+deduped by identity, so refreshing and hitting "like" again would have quietly inflated the
+count. I fixed it to use the same identity check as reach, and checked it by hand — two "like"
+events from the same identity, with different session IDs the way a refresh would look, now
+collapse into one, with the duplicate reported rather than hidden.
 
-No beacon-based system is airtight against someone hitting the ingest endpoint directly with
-spoofed headers. The defense is layered, not absolute — signature filtering, identity dedup on
-views *and* reactions — and, just as important, the dashboard never states raw views as reach;
-it shows both, labeled honestly. The next layer I'd add: a rate-anomaly signal per identity,
-since a UA string is trivial to fake but request cadence is harder to fake convincingly.
+I don't think any beacon-based system is fully safe from someone hitting the ingest endpoint
+directly with faked headers, and I'd rather say that than oversell what I built. What I have is
+layered, not airtight: signature-based bot filtering and identity-based deduping on both views
+and reactions, plus a dashboard that never presents raw views as if they were reach. The next
+layer I'd add is watching for unusual request rates per identity — a UA string is trivial to
+fake, but a convincingly human pace is a lot harder.
 
-## Launchpad: which states did I model, and how does failure recovery work?
+## How Launchpad fails, and how someone recovers from it
 
-`building → placing → live`, each a real timed server-side transition, polled by the client —
-the UI can never claim "live" before the server does. Failure is guaranteed: a ~30% random
-chance, plus a deterministic trigger (the word "fail" in the title) so it can be demonstrated
-on demand. On failure, the screen states plainly that something went wrong, confirms nothing
-was lost, and offers two proportionate actions: a primary **Try again** (retries the same
-content) and a secondary **Edit details** (returns to the form pre-filled — including a real
-thumbnail of the previously chosen image, since browsers can't silently refill a file input).
-No error codes, no stack traces.
+I modeled three states — building, placing, live — each backed by an actual timed transition
+on the server, not a spinner standing in for one. The client polls for real status, so it can
+never tell someone their page is live before it actually is. Failure is guaranteed to happen:
+about 30% of the time on its own, and reliably on demand if the title contains the word "fail,"
+so it's easy to show without waiting around for bad luck.
 
-## How did I use AI, and where did I override it?
+When it fails, the screen says plainly that something went wrong and that nothing they wrote
+was lost, then offers two ways forward: a primary "Try again," which retries the exact same
+content, and a secondary "Edit details," which returns them to the form filled back in —
+including a small thumbnail of the image they'd already chosen, since a browser won't silently
+refill a file picker on its own. No error code, no stack trace, anywhere on that screen.
 
-I built this pairing with Claude Code, which wrote essentially all of the implementation from
-direction I gave step by step — I tested each piece against real data or in a real browser
-before moving on, rather than trusting it by description. The clearest override: the first
-pass of the reach model counted reactions like any other event, with no identity dedup. I only
-caught it by clicking "like," refreshing, and watching the button unlock again — then pushed
-for the same identity-based dedup already used for views. A real gap in the model's internal
-consistency, not a cosmetic bug, and it's now fixed and directly tested.
+## Where AI helped, and where I overrode it
 
-## Given another week, what would I build next?
+I built this working with Claude Code, which wrote nearly all of the implementation from
+directions I gave one step at a time. My part was steering it and checking its work against
+something real — real data, a real browser — before moving on, rather than trusting a
+description of what it had done. The clearest override: its first pass at the reach model
+treated reactions like any other event, with no identity check. I only noticed because I
+published a page myself, liked it, refreshed, and watched the button unlock again like nothing
+had happened. That meant the number could be inflated by something as simple as a refresh, so
+I pushed for the same identity-based dedupe already used for views, and confirmed the fix with
+a direct test before calling it done.
 
-Persistent storage (SQLite or Postgres) so published pages survive a restart — the most
-immediate real gap today. A rate-anomaly signal as a second bot-detection layer beyond UA
-matching. Real-time push instead of polling, and a visible confidence indicator on reach
-reflecting how much traffic was filtered out to produce it.
+## What I'd build next, given another week
+
+Real persistent storage, so a published page survives a restart — the most immediate gap
+today. A second layer of bot detection based on request pace rather than just UA strings,
+since the latter is easy to fake. And a visible confidence indicator next to the reach number,
+so it's clear at a glance how much of the raw traffic was filtered out to produce it.

@@ -27,7 +27,7 @@ that this last part is a proxy, not a perfect identity — two real people behin
 router on the same browser and OS would look like one person to this model. I'd rather say
 that plainly than let the number look more precise than it is.
 
-I didn't take this on faith — I ran it against the real `events.ndjson` they gave us. Of 78
+I didn't take this on faith — I ran it against the real `events.ndjson` you gave me. Of 78
 lines, 72 survive deduping. Of those, 62 turned out to be bots: one script alone generated 47
 pageloads from a single IP, spreading itself across 43 different rotating session IDs to look
 like 43 different people. What's left is 3 real, distinct humans across both pages, out of 67

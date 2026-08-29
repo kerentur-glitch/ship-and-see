@@ -29,14 +29,37 @@ function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     if (!file) return resolve(null);
     if (file.size > MAX_IMAGE_BYTES) {
-      return reject(new Error("התמונה גדולה מדי (עד 3.5MB). נסי תמונה קטנה יותר."));
+      return reject(new Error("התמונה גדולה מדי (עד 3.5MB). כדאי לבחור תמונה קטנה יותר."));
     }
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("לא הצלחנו לקרוא את התמונה. נסי קובץ אחר."));
+    reader.onerror = () => reject(new Error("לא הצלחנו לקרוא את הקובץ. אפשר לנסות קובץ אחר."));
     reader.readAsDataURL(file);
   });
 }
+
+// Coming back to this screen via the browser's back/forward button restores
+// the page from bfcache with whatever JS state it had before — stale form
+// values, a stray "kept image" hint, maybe a finished progress bar. Landing
+// here any other way than the in-app "edit" flow should start clean.
+function resetToFreshForm() {
+  stopPolling();
+  form.reset();
+  lastDraft = { title: "", blurb: "", imageDataUrl: null };
+  clearFormError();
+  keptImagePreview.src = "";
+  keptImageHint.classList.add("hidden");
+  showOnly(form);
+}
+
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted) resetToFreshForm();
+});
+
+// Landing here fresh always starts clean too — some browsers restore old
+// input values on a plain back-navigation reload even without bfcache,
+// independently of any of the app's own state.
+resetToFreshForm();
 
 function showOnly(card) {
   [form, progressCard, successCard, errorCard].forEach((el) => el.classList.add("hidden"));
@@ -119,7 +142,7 @@ form.addEventListener("submit", async (e) => {
     if (!res.ok) {
       const problem = await res.json().catch(() => ({}));
       showOnly(form);
-      showFormError(problem.error || "לא הצלחנו לפרסם. בדקי את השדות ונסי שוב.");
+      showFormError(problem.error || "לא הצלחנו לפרסם. כדאי לבדוק את השדות ולנסות שוב.");
       return;
     }
 
@@ -128,7 +151,7 @@ form.addEventListener("submit", async (e) => {
     pollStatus(currentId);
   } catch (err) {
     showOnly(form);
-    showFormError(err.message || "משהו השתבש. נסי שוב.");
+    showFormError(err.message || "משהו השתבש. אפשר לנסות שוב.");
   } finally {
     submitBtn.disabled = false;
   }
@@ -159,10 +182,4 @@ editBtn.addEventListener("click", () => {
   showOnly(form);
 });
 
-publishAnotherBtn.addEventListener("click", () => {
-  clearFormError();
-  form.reset();
-  lastDraft = { title: "", blurb: "", imageDataUrl: null };
-  keptImageHint.classList.add("hidden");
-  showOnly(form);
-});
+publishAnotherBtn.addEventListener("click", resetToFreshForm);

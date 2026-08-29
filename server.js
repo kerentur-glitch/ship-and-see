@@ -14,7 +14,7 @@ app.use(express.static("public"));
 // a default HTML error page the frontend can't parse and would hang on.
 app.use((err, req, res, next) => {
   if (err && (err.type === "entity.too.large" || err.status === 413)) {
-    return res.status(413).json({ error: "התוכן גדול מדי. נסי תמונה קטנה יותר." });
+    return res.status(413).json({ error: "התוכן גדול מדי. כדאי לבחור תמונה קטנה יותר." });
   }
   if (err instanceof SyntaxError) {
     return res.status(400).json({ error: "בקשה לא תקינה." });
@@ -160,6 +160,24 @@ app.get("/api/pulse", (req, res) => {
     };
   }
 
+  // A page can be live on Launchpad with zero visits so far — show it on
+  // Pulse right away rather than making it wait for its first event.
+  for (const [pageId, page] of pages) {
+    if (page.status === "live" && !pagesOut[pageId]) {
+      pagesOut[pageId] = {
+        rawViews: 0,
+        reach: 0,
+        botViewsFiltered: 0,
+        reactions: { like: 0, heart: 0 },
+        botReactionsFiltered: 0,
+        duplicateReactionsFiltered: 0,
+        title: page.title,
+        liveUrl: `/p/${pageId}`,
+        settled: true,
+      };
+    }
+  }
+
   res.json({ pages: pagesOut, eventsIngested: cleaned.length });
 });
 
@@ -190,10 +208,10 @@ function simpleNotice(title, body) {
 app.get("/p/:id", (req, res) => {
   const page = pages.get(req.params.id);
   if (!page) {
-    return res.status(404).send(simpleNotice("הדף הזה לא קיים", 'ייתכן שהקישור שגוי, או שהשרת הופעל מחדש מאז שהוא פורסם. <a href="/index.html">פרסמי דף חדש →</a>'));
+    return res.status(404).send(simpleNotice("הדף הזה לא קיים", 'ייתכן שהקישור שגוי, או שהשרת הופעל מחדש מאז שהוא פורסם. <a href="/index.html">פרסום דף חדש →</a>'));
   }
   if (page.status !== "live") {
-    return res.status(404).send(simpleNotice("הדף עוד לא חי", "עדיין בתהליך פרסום — נסי שוב בעוד רגע."));
+    return res.status(404).send(simpleNotice("הדף עוד לא חי", "עדיין בתהליך פרסום — אפשר לנסות שוב בעוד רגע."));
   }
 
   res.send(`<!doctype html>

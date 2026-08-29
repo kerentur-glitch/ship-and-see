@@ -33,7 +33,7 @@ function renderPages(pages) {
   const orderedIds = stableOrder(Object.keys(pages));
 
   if (orderedIds.length === 0) {
-    listEl.innerHTML = `<p class="empty">עדיין אין נתונים — פרסמי דף ב-Launchpad כדי לראות אותו כאן.</p>`;
+    listEl.innerHTML = `<p class="empty">עדיין אין נתונים — פרסום דף ב-Launchpad יציג אותו כאן.</p>`;
     return;
   }
 
@@ -64,7 +64,7 @@ function renderPages(pages) {
             <span>👍 ${p.reactions.like}</span>
             <span>❤️ ${p.reactions.heart}</span>
           </div>
-          ${p.liveUrl ? `<a class="page-link" href="${p.liveUrl}" target="_blank">פתחי את הדף ↗</a>` : ""}
+          ${p.liveUrl ? `<a class="page-link" href="${p.liveUrl}" target="_blank">פתיחת הדף ↗</a>` : ""}
         </div>
       </div>
     `;

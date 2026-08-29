@@ -12,28 +12,28 @@
       <p class="eyebrow">Launchpad</p>
       <a class="nav-link" href="/pulse.html">Pulse ←</a>
     </div>
-    <h1>פרסמי משהו קטן</h1>
-    <p class="sub">כותרת, טקסט קצר, ותמונה — ותקבלי קישור חי שאפשר לשתף.</p>
+    <h1>לפרסם משהו קטן</h1>
+    <p class="sub">כותרת, טקסט קצר, ותמונה — ובסוף מתקבלת כתובת חיה שאפשר לשתף.</p>
 
-    <form id="publishForm" class="card">
+    <form id="publishForm" class="card" autocomplete="off">
       <label>
         <span>כותרת</span>
-        <input type="text" id="title" placeholder="🚀 עכשיו חי: שם הפיצ'ר" required>
+        <input type="text" id="title" placeholder="🚀 עכשיו חי: שם הפיצ'ר" autocomplete="off" required>
       </label>
       <label>
         <span>תיאור קצר</span>
-        <textarea id="blurb" rows="3" placeholder="שתי-שלוש שורות שמסבירות מה זה"></textarea>
+        <textarea id="blurb" rows="3" placeholder="שתי-שלוש שורות שמסבירות מה זה" autocomplete="off"></textarea>
       </label>
       <label>
         <span>תמונה (לא חובה)</span>
         <input type="file" id="image" accept="image/*">
         <div id="keptImageHint" class="kept-image hidden">
           <img id="keptImagePreview" alt="">
-          <span>התמונה הזו תישמר אם לא תבחרי קובץ חדש</span>
+          <span>התמונה הזו תישמר אם לא ייבחר קובץ חדש</span>
         </div>
       </label>
       <p id="formError" class="hint error-text hidden"></p>
-      <button type="submit" id="submitBtn">פרסמי</button>
+      <button type="submit" id="submitBtn">פרסום</button>
     </form>
 
     <section id="progressCard" class="card hidden">
@@ -48,9 +48,9 @@
       <p class="success-title">🎉 זה חי עכשיו</p>
       <a id="liveLink" class="live-link" href="#" target="_blank"></a>
       <div class="actions">
-        <a id="openBtn" class="btn primary" href="#" target="_blank">פתחי את הדף</a>
-        <a class="btn" href="/pulse.html">צפי ב-Pulse</a>
-        <button id="publishAnotherBtn" class="btn">פרסמי עוד אחד</button>
+        <a id="openBtn" class="btn primary" href="#" target="_blank">פתיחת הדף</a>
+        <a class="btn" href="/pulse.html">צפייה ב-Pulse</a>
+        <button id="publishAnotherBtn" class="btn">פרסום נוסף</button>
       </div>
     </section>
 
@@ -58,8 +58,8 @@
       <p class="error-title">משהו השתבש בזמן שהעלינו את הדף שלך לאוויר</p>
       <p class="error-body">שום דבר לא אבד — כל מה שכתבת עדיין שמור.</p>
       <div class="actions">
-        <button id="retryBtn" class="btn primary">נסי שוב</button>
-        <button id="editBtn" class="btn">לערוך את הפרטים</button>
+        <button id="retryBtn" class="btn primary">ניסיון נוסף</button>
+        <button id="editBtn" class="btn">עריכת הפרטים</button>
       </div>
     </section>
   </main>

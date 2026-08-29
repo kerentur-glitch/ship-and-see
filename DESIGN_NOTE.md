@@ -80,5 +80,8 @@ a direct test before calling it done.
 
 Real persistent storage, so a published page survives a restart — the most immediate gap
 today. A second layer of bot detection based on request pace rather than just UA strings,
-since the latter is easy to fake. And a visible confidence indicator next to the reach number,
-so it's clear at a glance how much of the raw traffic was filtered out to produce it.
+since the latter is easy to fake. A visible confidence indicator next to the reach number, so
+it's clear at a glance how much of the raw traffic was filtered out to produce it. And a way to
+take a page down from Pulse itself — publishing without a way to unpublish feels half-built,
+though it raises its own question worth answering deliberately rather than rushing: does taking
+a page down erase its history, or just mark it inactive while keeping what it already earned?

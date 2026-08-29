@@ -30,8 +30,8 @@ input[type="text"], textarea, input[type="file"]{
 textarea{resize:vertical;}
 .hint{margin:6px 0 0; font-size:12.5px; font-weight:400; color:var(--ink-soft);}
 .hint.error-text{color:var(--pulse); margin-bottom:8px;}
-.kept-image{display:flex; align-items:center; gap:8px; margin-top:8px; font-size:12.5px; font-weight:400; color:var(--ink-soft);}
-.kept-image img{width:36px; height:36px; object-fit:cover; border-radius:6px; border:1px solid var(--rule); flex:none;}
+.image-preview{display:flex; align-items:center; gap:10px; margin-top:8px; font-size:12.5px; font-weight:400; color:var(--ink-soft);}
+.image-preview img{width:48px; height:48px; object-fit:cover; border-radius:6px; border:1px solid var(--rule); flex:none;}
 
 .btn{
   display:inline-block; text-align:center; font:inherit; font-weight:650; font-size:14.5px;

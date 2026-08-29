@@ -5,8 +5,10 @@ const errorCard = document.getElementById("errorCard");
 const retryBtn = document.getElementById("retryBtn");
 const editBtn = document.getElementById("editBtn");
 const publishAnotherBtn = document.getElementById("publishAnotherBtn");
-const keptImageHint = document.getElementById("keptImageHint");
-const keptImagePreview = document.getElementById("keptImagePreview");
+const imageInput = document.getElementById("image");
+const imagePreviewBox = document.getElementById("imagePreviewBox");
+const imagePreview = document.getElementById("imagePreview");
+const imagePreviewCaption = document.getElementById("imagePreviewCaption");
 const formError = document.getElementById("formError");
 const submitBtn = document.getElementById("submitBtn");
 
@@ -38,17 +40,49 @@ function fileToDataUrl(file) {
   });
 }
 
+function hideImagePreview() {
+  imagePreviewBox.classList.add("hidden");
+  imagePreview.src = "";
+  imagePreviewCaption.textContent = "";
+}
+
+function showImagePreview(url, caption) {
+  imagePreview.src = url;
+  imagePreviewCaption.textContent = caption || "";
+  imagePreviewBox.classList.remove("hidden");
+}
+
+// One preview, two ways to get an image into it: a file just chosen in the
+// input, or (during "edit and republish" after a failure) the image from
+// the previous attempt, which a browser can't silently put back in a file
+// input on its own.
+async function refreshImagePreview() {
+  const file = imageInput.files[0];
+  if (file) {
+    try {
+      showImagePreview(await fileToDataUrl(file), "");
+    } catch (e) {
+      hideImagePreview(); // the real error surfaces on submit instead
+    }
+  } else if (lastDraft.imageDataUrl) {
+    showImagePreview(lastDraft.imageDataUrl, "התמונה הזו תישמר אם לא ייבחר קובץ חדש");
+  } else {
+    hideImagePreview();
+  }
+}
+
+imageInput.addEventListener("change", refreshImagePreview);
+
 // Coming back to this screen via the browser's back/forward button restores
 // the page from bfcache with whatever JS state it had before — stale form
-// values, a stray "kept image" hint, maybe a finished progress bar. Landing
-// here any other way than the in-app "edit" flow should start clean.
+// values, a stray image preview, maybe a finished progress bar. Landing here
+// any other way than the in-app "edit" flow should start clean.
 function resetToFreshForm() {
   stopPolling();
   form.reset();
   lastDraft = { title: "", blurb: "", imageDataUrl: null };
   clearFormError();
-  keptImagePreview.src = "";
-  keptImageHint.classList.add("hidden");
+  hideImagePreview();
   showOnly(form);
 }
 
@@ -172,13 +206,8 @@ editBtn.addEventListener("click", () => {
   clearFormError();
   document.getElementById("title").value = lastDraft.title;
   document.getElementById("blurb").value = lastDraft.blurb;
-  document.getElementById("image").value = "";
-  if (lastDraft.imageDataUrl) {
-    keptImagePreview.src = lastDraft.imageDataUrl;
-    keptImageHint.classList.remove("hidden");
-  } else {
-    keptImageHint.classList.add("hidden");
-  }
+  imageInput.value = "";
+  refreshImagePreview();
   showOnly(form);
 });
 

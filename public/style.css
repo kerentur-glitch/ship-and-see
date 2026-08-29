@@ -19,7 +19,7 @@ h1{font-size:26px; margin:0 0 6px;}
 .sub{color:var(--ink-soft); margin:0 0 24px; font-size:15px;}
 
 .card{background:var(--surface); border:1px solid var(--rule); border-radius:12px; padding:22px 24px; margin-bottom:16px;}
-.hidden{display:none;}
+.hidden{display:none !important;}
 
 form label{display:block; margin-bottom:16px; font-size:13.5px; font-weight:600;}
 form label span{display:block; margin-bottom:6px; color:var(--ink-soft); font-weight:600;}

@@ -20,12 +20,16 @@ no login or accounts; it's one shared, anonymous publish flow, matching the scop
 
 ## Why I'd trust the Pulse number, and how I'd defend it
 
-The core idea is simple: dedupe by `event_id` so a re-delivered event can't double-count, sort
-by the actual timestamp rather than arrival order, filter out known bot signatures, and count
-a "human" as one distinct (IP, user-agent) pair among whatever's left. I want to be upfront
-that this last part is a proxy, not a perfect identity — two real people behind the same
-router on the same browser and OS would look like one person to this model. I'd rather say
-that plainly than let the number look more precise than it is.
+The core idea: ingest is idempotent — deduping by `event_id` before anything else runs means a
+re-delivered event literally can't double-count, no matter how many times it shows up. From
+there, everything downstream is a count or a set built over the whole batch at once, not a
+running tally that trusts the order events arrived in, so out-of-order timestamps have nowhere
+to do damage. I do sort by the real timestamp, but that's to judge how fresh the data is (see
+"settled" below), not what makes the counts correct. On top of that: filter out known bot
+signatures, and count a "human" as one distinct (IP, user-agent) pair among whatever's left. I
+want to be upfront that this last part is a proxy, not a perfect identity — two real people
+behind the same router on the same browser and OS would look like one person to this model.
+I'd rather say that plainly than let the number look more precise than it is.
 
 I didn't take this on faith — I ran it against the real `events.ndjson` you gave me. Of 78
 lines, 72 survive deduping. Of those, 62 turned out to be bots: one script alone generated 47
@@ -51,7 +55,7 @@ fake, but a convincingly human pace is a lot harder.
 I modeled three states — building, placing, live — each backed by an actual timed transition
 on the server, not a spinner standing in for one. The client polls for real status, so it can
 never tell someone their page is live before it actually is. Failure is guaranteed to happen:
-about 30% of the time on its own, and reliably on demand if the title contains the word "fail,"
+about 30% of the time on its own, and reliably on demand if the title contains the word "fail"
 so it's easy to show without waiting around for bad luck.
 
 When it fails, the screen says plainly that something went wrong and that nothing they wrote

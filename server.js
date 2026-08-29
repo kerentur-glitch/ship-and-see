@@ -10,6 +10,18 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: "5mb" }));
 app.use(express.static("public"));
 
+// A body that's too large or malformed should fail cleanly as JSON, not with
+// a default HTML error page the frontend can't parse and would hang on.
+app.use((err, req, res, next) => {
+  if (err && (err.type === "entity.too.large" || err.status === 413)) {
+    return res.status(413).json({ error: "התוכן גדול מדי. נסי תמונה קטנה יותר." });
+  }
+  if (err instanceof SyntaxError) {
+    return res.status(400).json({ error: "בקשה לא תקינה." });
+  }
+  next(err);
+});
+
 // In-memory store: pages live only as long as this process runs.
 // A deliberate scope cut — see the design note.
 const pages = new Map();
@@ -71,7 +83,7 @@ function advance(id) {
 app.post("/api/publish", (req, res) => {
   const { title, blurb, imageDataUrl } = req.body || {};
   if (!title || !title.trim()) {
-    return res.status(400).json({ error: "Title is required." });
+    return res.status(400).json({ error: "כותרת היא שדה חובה." });
   }
 
   const id = genId();
@@ -151,13 +163,37 @@ app.get("/api/pulse", (req, res) => {
   res.json({ pages: pagesOut, eventsIngested: cleaned.length });
 });
 
+function simpleNotice(title, body) {
+  return `<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>${escapeHtml(title)}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{font-family:-apple-system,sans-serif;max-width:480px;margin:80px auto;padding:0 20px;color:#14181F;background:#F4F5F7;text-align:center;}
+    .card{background:#fff;border-radius:14px;padding:32px 28px;border:1px solid #DCE0E6;}
+    h1{font-size:20px;margin:0 0 8px;}
+    p{color:#5B6472;font-size:14.5px;margin:0;}
+    a{color:#3557E8;text-decoration:none;font-weight:600;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>${escapeHtml(title)}</h1>
+    <p>${body}</p>
+  </div>
+</body>
+</html>`;
+}
+
 app.get("/p/:id", (req, res) => {
   const page = pages.get(req.params.id);
   if (!page) {
-    return res.status(404).send("<h1>This page doesn't exist.</h1>");
+    return res.status(404).send(simpleNotice("הדף הזה לא קיים", 'ייתכן שהקישור שגוי, או שהשרת הופעל מחדש מאז שהוא פורסם. <a href="/index.html">פרסמי דף חדש →</a>'));
   }
   if (page.status !== "live") {
-    return res.status(404).send("<h1>This page isn't live yet.</h1>");
+    return res.status(404).send(simpleNotice("הדף עוד לא חי", "עדיין בתהליך פרסום — נסי שוב בעוד רגע."));
   }
 
   res.send(`<!doctype html>

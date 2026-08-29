@@ -1,6 +1,17 @@
 const overviewEl = document.getElementById("overview");
 const listEl = document.getElementById("pageList");
 
+// Cards keep a stable position once shown — sorting live by a number that
+// keeps changing (reach) would make the whole list jump around every poll.
+// New pages just join at the end.
+const knownOrder = [];
+function stableOrder(pageIds) {
+  for (const id of pageIds) {
+    if (!knownOrder.includes(id)) knownOrder.push(id);
+  }
+  return knownOrder.filter((id) => pageIds.includes(id));
+}
+
 function esc(str) {
   return String(str).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }
@@ -19,15 +30,20 @@ function renderOverview(pages) {
 }
 
 function renderPages(pages) {
-  const entries = Object.entries(pages).sort((a, b) => b[1].reach - a[1].reach);
+  const orderedIds = stableOrder(Object.keys(pages));
 
-  if (entries.length === 0) {
+  if (orderedIds.length === 0) {
     listEl.innerHTML = `<p class="empty">עדיין אין נתונים — פרסמי דף ב-Launchpad כדי לראות אותו כאן.</p>`;
     return;
   }
 
-  listEl.innerHTML = entries
-    .map(([pageId, p]) => `
+  listEl.innerHTML = orderedIds
+    .map((pageId) => {
+      const p = pages[pageId];
+      const dupNote = p.duplicateReactionsFiltered > 0
+        ? ` · ${p.duplicateReactionsFiltered} ריאקציה כפולה מאותו אדם סוננה`
+        : "";
+      return `
       <div class="page-card">
         <div class="page-card-head">
           <div>
@@ -41,7 +57,7 @@ function renderPages(pages) {
           <span class="reach-num">${p.reach}</span>
           <span class="reach-lbl">בני אדם ייחודיים (reach)</span>
         </div>
-        <p class="raw-line">מתוך ${p.rawViews} ביקורים גולמיים · ${p.botViewsFiltered} סוננו כבוטים</p>
+        <p class="raw-line">מתוך ${p.rawViews} ביקורים גולמיים · ${p.botViewsFiltered} סוננו כבוטים${dupNote}</p>
 
         <div class="page-foot">
           <div class="reaction-tally">
@@ -51,7 +67,8 @@ function renderPages(pages) {
           ${p.liveUrl ? `<a class="page-link" href="${p.liveUrl}" target="_blank">פתחי את הדף ↗</a>` : ""}
         </div>
       </div>
-    `)
+    `;
+    })
     .join("");
 }
 

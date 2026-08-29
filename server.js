@@ -7,6 +7,16 @@ const { parseNdjson, processEvents, summarize } = require("./lib/ingest");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Visible in Render's live log tab — a quick way to see when someone opens
+// the demo, without building any tracking into the product itself.
+app.use((req, res, next) => {
+  const isPageLoad = req.path === "/" || req.path === "/index.html" || req.path === "/pulse.html" || /^\/p\/[^/]+$/.test(req.path);
+  if (isPageLoad) {
+    console.log(`[visit] ${new Date().toISOString()} ${req.path} — ${req.headers["user-agent"] || "unknown"}`);
+  }
+  next();
+});
+
 app.use(express.json({ limit: "5mb" }));
 app.use(express.static("public"));
 
